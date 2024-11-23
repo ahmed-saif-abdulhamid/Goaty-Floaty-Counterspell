@@ -3,22 +3,18 @@ import sys
 import random
 import os
 
-# ----------- Initialization -----------
 pygame.init()
 pygame.mixer.init()
 
-# ----------- Game Settings -----------
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 400
 
-# Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GOLD = (255, 215, 0)
 GREEN = (0, 255, 0)
 
-# Player settings
 PLAYER_SIZE = 50
 PLAYER_START_X = 100
 PLAYER_START_Y = SCREEN_HEIGHT - PLAYER_SIZE - 50
@@ -27,7 +23,6 @@ PLAYER_MAX_SPEED = 10
 GRAVITY = 1
 JUMP_VELOCITY = -15
 
-# Obstacle and Coin settings
 OBSTACLE_GAP_MIN = 300
 OBSTACLE_GAP_MAX = 600
 COIN_SIZE = 30
@@ -35,16 +30,13 @@ COIN_SPEED = 5
 COIN_GAP_MIN = 500
 COIN_GAP_MAX = 700
 
-# Paths to assets
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGE_DIR = os.path.join(BASE_DIR, 'assets', 'images')
 SOUND_DIR = os.path.join(BASE_DIR, 'assets', 'sounds')
 
-# ----------- Display Setup -----------
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Goaty Loaty")
 
-# ----------- Load Assets -----------
 try:
     PLAYER_IMAGE = pygame.image.load(os.path.join(IMAGE_DIR, 'player.png')).convert_alpha()
     PLAYER_IMAGE = pygame.transform.scale(PLAYER_IMAGE, (PLAYER_SIZE, PLAYER_SIZE))
@@ -71,7 +63,6 @@ except pygame.error as e:
     pygame.quit()
     sys.exit()
 
-# ----------- Classes -----------
 class Player:
     def __init__(self):
         self.image = PLAYER_IMAGE
@@ -114,7 +105,7 @@ class Player:
 
     def accelerate(self, elapsed_time):
         """Increase player speed over time."""
-        if elapsed_time < 30:  # Accelerate only during the game duration
+        if elapsed_time < 30:  
             self.speed = PLAYER_INITIAL_SPEED + (PLAYER_MAX_SPEED - PLAYER_INITIAL_SPEED) * (elapsed_time / 30)
 
     def draw(self, screen):
@@ -151,7 +142,6 @@ class Coin:
         screen.blit(self.image, (self.x, self.y))
 
 
-# ----------- Helper Functions -----------
 def generate_obstacles_and_coins():
     obstacles = []
     coins = []
@@ -159,11 +149,11 @@ def generate_obstacles_and_coins():
     next_obstacle_x = SCREEN_WIDTH + random.randint(OBSTACLE_GAP_MIN, OBSTACLE_GAP_MAX)
     next_coin_x = SCREEN_WIDTH + random.randint(COIN_GAP_MIN, COIN_GAP_MAX)
 
-    for _ in range(3):  # Generate 3 obstacles and coins
+    for _ in range(3):  
         obstacles.append(Obstacle(next_obstacle_x))
         next_obstacle_x += random.randint(OBSTACLE_GAP_MIN, OBSTACLE_GAP_MAX)
 
-        if random.random() < 0.7:  # 70% chance to generate a coin
+        if random.random() < 0.7:  
             coin_y = random.randint(100, SCREEN_HEIGHT - 150)
             coins.append(Coin(next_coin_x, coin_y))
         next_coin_x += random.randint(COIN_GAP_MIN, COIN_GAP_MAX)
@@ -174,7 +164,7 @@ def generate_obstacles_and_coins():
 def win_screen(score, coins_collected):
     font = pygame.font.SysFont('arial', 50)
     small_font = pygame.font.SysFont('arial', 30)
-    pygame.mixer.music.stop()  # Stop background music
+    pygame.mixer.music.stop() 
     WIN_SOUND.play()
 
     while True:
@@ -197,7 +187,7 @@ def win_screen(score, coins_collected):
 def game_over_screen(score, coins_collected):
     font = pygame.font.SysFont('arial', 50)
     small_font = pygame.font.SysFont('arial', 30)
-    pygame.mixer.music.stop()  # Stop background music
+    pygame.mixer.music.stop()  
     WASTED_SOUND.play()
 
     while True:
@@ -223,7 +213,6 @@ def display_text(text, font, color, x, y):
     SCREEN.blit(text_surface, text_rect)
 
 
-# ----------- Game Loop -----------
 
 def main():
     clock = pygame.time.Clock()
@@ -236,7 +225,7 @@ def main():
     obstacles, coins = generate_obstacles_and_coins()
 
     bg_x = 0
-    start_time = pygame.time.get_ticks()  # Track start time
+    start_time = pygame.time.get_ticks()  
 
     running = True
     while running:
@@ -249,29 +238,24 @@ def main():
 
         elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
 
-        # Player mechanics
         player.accelerate(elapsed_time)
         player.update(keys)
 
-        # Obstacle mechanics
         for obstacle in obstacles[:]:
             obstacle.update()
             if obstacle.x < -50:
                 obstacles.remove(obstacle)
 
-        # Coin mechanics
         for coin in coins[:]:
             coin.update()
             if coin.x < -COIN_SIZE:
                 coins.remove(coin)
 
-        # Regenerate obstacles and coins
         if len(obstacles) < 2:
             new_obstacles, new_coins = generate_obstacles_and_coins()
             obstacles.extend(new_obstacles)
             coins.extend(new_coins)
 
-        # Collision detection
         for obstacle in obstacles:
             if player.rect.colliderect(obstacle.rect):
                 game_over_screen(score, coins_collected)
@@ -283,17 +267,14 @@ def main():
                 score += 10
                 coins.remove(coin)
 
-        # Check win condition
         if elapsed_time >= 30:
             win_screen(score, coins_collected)
             return
 
-        # Background movement
         bg_x -= int(player.speed)
         if bg_x <= -SCREEN_WIDTH:
             bg_x = 0
 
-        # Draw elements
         SCREEN.blit(BACKGROUND_IMAGE, (bg_x, 0))
         SCREEN.blit(BACKGROUND_IMAGE, (bg_x + SCREEN_WIDTH, 0))
         player.draw(SCREEN)
@@ -303,7 +284,6 @@ def main():
         for coin in coins:
             coin.draw(SCREEN)
 
-        # Display score, coins, and time
         text_score = font.render(f"Score: {score}", True, WHITE)
         text_coins = font.render(f"Coins: {coins_collected}", True, GOLD)
         text_time = font.render(f"Time: {max(0, int(30 - elapsed_time))}s", True, WHITE)
@@ -316,7 +296,6 @@ def main():
     pygame.quit()
 
 
-# ----------- Main Menu -----------
 
 def main_menu():
     font = pygame.font.SysFont('arial', 50)
@@ -340,7 +319,6 @@ def main_menu():
                 return
 
 
-# ----------- Run the Game -----------
 
 if __name__ == "__main__":
     while True:
